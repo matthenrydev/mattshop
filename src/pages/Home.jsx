@@ -244,14 +244,12 @@ export default function Home() {
 
             {/* Chat Widget */}
             <ChatWidget
+                apiBaseUrl={import.meta.env.VITE_API_BASE_URL}
                 apiKey={import.meta.env.VITE_API_KEY}
                 apiSecret={import.meta.env.VITE_API_SECRET}
-                apiUrl={import.meta.env.VITE_API_URL}
-                socketUrl={import.meta.env.VITE_SOCKET_URL}
-                socketPath={import.meta.env.VITE_SOCKET_PATH}
                 title="Matt's Repair Shop"
                 subtitle="AI Support Bot"
-                greeting="Hello! Need a repair? I can help you book a service or answer any questions."
+                greeting="Hello! Need a repair? I can help..."
             />
         </div>
     );

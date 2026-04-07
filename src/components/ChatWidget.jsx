@@ -9,25 +9,32 @@ import { toast } from 'sonner';
 const SESSION_STORAGE_KEY = 'bot_session_id';
 
 const ChatWidget = ({
-    apiUrl = '/api/chat',
+    apiBaseUrl = '',
     apiKey,
     apiSecret,
+    apiUrl,
     socketUrl,
     socketPath = '/api/socket',
     title = 'Customer Support',
     subtitle = 'AI Support Bot',
     greeting = 'Hello!, How can I help you today?',
 }) => {
+    // Derive URLs from base URL if provided, otherwise use individual URLs
+    const finalApiUrl = apiUrl || (apiBaseUrl ? `${apiBaseUrl}/api/chat` : '/api/chat');
+    const finalSocketUrl = socketUrl || apiBaseUrl || undefined;
+
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [chatHistory, setChatHistory] = useState([
-        { role: 'bot', text: greeting }
+        { role: 'bot', text: greeting, timestamp: new Date() }
     ]);
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [isTakenOver, setIsTakenOver] = useState(false);
     const [socket, setSocket] = useState(null);
     const chatEndRef = useRef(null);
+    const processedMessages = useRef(new Set());
+    const sessionIdRef = useRef(null);
 
     const scrollToBottom = useCallback(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,37 +43,36 @@ const ChatWidget = ({
     // Initialize socket connection
     useEffect(() => {
         const initSocket = () => {
-            const newSocket = io(socketUrl || undefined, {
+            const newSocket = io(finalSocketUrl, {
                 path: socketPath,
                 addTrailingSlash: false,
             });
 
             newSocket.on('connect', () => {
                 console.log('Socket connected:', newSocket.id);
-                // Re-join session if we have one
-                const currentSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
-                if (currentSessionId) {
-                    console.log('Re-joining session:', currentSessionId);
-                    newSocket.emit('join-session', currentSessionId);
-                }
             });
 
             newSocket.on('new-message', (msg) => {
                 console.log('Received new-message:', msg);
-                setChatHistory(prev => {
-                    // Check for duplicates by text and role
-                    const isDuplicate = prev.some(m =>
-                        m.text === msg.text &&
-                        m.role === msg.role &&
-                        m.timestamp && msg.timestamp &&
-                        Math.abs(new Date(m.timestamp).getTime() - new Date(msg.timestamp).getTime()) < 1000
-                    );
-                    if (isDuplicate) {
-                        console.log('Duplicate message ignored:', msg);
-                        return prev;
-                    }
-                    return [...prev, msg];
-                });
+
+                // Ignore messages from other sessions
+                if (msg.sessionId && msg.sessionId !== sessionIdRef.current) {
+                    console.log('Message from different session, ignoring:', msg.sessionId);
+                    return;
+                }
+
+                // Use messageId for deduplication if available (for admin messages)
+                const msgKey = msg.messageId
+                    ? `msgid:${msg.messageId}`
+                    : `${msg.role}:${msg.text}:${new Date(msg.timestamp || Date.now()).getTime()}`;
+
+                if (processedMessages.current.has(msgKey)) {
+                    console.log('Duplicate message ignored:', msg);
+                    return;
+                }
+                processedMessages.current.add(msgKey);
+
+                setChatHistory(prev => [...prev, msg]);
             });
 
             newSocket.on('session-taken-over', () => {
@@ -79,7 +85,8 @@ const ChatWidget = ({
                 toast.info('The conversation has been closed by the admin');
                 setChatHistory(prev => [...prev, {
                     role: 'bot',
-                    text: 'The admin has closed this conversation. The AI assistant is now available to help you again.'
+                    text: 'The admin has closed this conversation. The AI assistant is now available to help you again.',
+                    timestamp: new Date()
                 }]);
             });
 
@@ -91,7 +98,7 @@ const ChatWidget = ({
         };
 
         initSocket();
-    }, [socketUrl, socketPath]);
+    }, [finalSocketUrl, socketPath]);
 
     // Initialize or restore session
     useEffect(() => {
@@ -105,13 +112,14 @@ const ChatWidget = ({
                 if (apiSecret) headers['X-API-Secret'] = apiSecret;
 
                 const queryParam = storedSessionId ? `?sessionId=${storedSessionId}` : '';
-                const response = await fetch(`${apiUrl}${queryParam}`, {
+                const response = await fetch(`${finalApiUrl}${queryParam}`, {
                     headers: Object.keys(headers).length > 0 ? headers : undefined
                 });
                 const data = await response.json();
 
                 if (data.sessionId) {
                     setSessionId(data.sessionId);
+                    sessionIdRef.current = data.sessionId;
                     localStorage.setItem(SESSION_STORAGE_KEY, data.sessionId);
                     setIsTakenOver(data.takenOver);
 
@@ -122,11 +130,20 @@ const ChatWidget = ({
 
                     // Restore chat history if available
                     if (data.messages && data.messages.length > 0) {
-                        setChatHistory(data.messages.map((m) => ({
+                        const messages = data.messages.map((m) => ({
                             role: m.role,
                             text: m.text,
                             timestamp: new Date(m.timestamp),
-                        })));
+                            messageId: m.messageId,
+                        }));
+                        // Pre-populate processed messages with messageId or timestamp-based key
+                        messages.forEach((m) => {
+                            const key = m.messageId
+                                ? `msgid:${m.messageId}`
+                                : `${m.role}:${m.text}:${new Date(m.timestamp || Date.now()).getTime()}`;
+                            processedMessages.current.add(key);
+                        });
+                        setChatHistory(messages);
                     }
                 }
             } catch (error) {
@@ -137,7 +154,7 @@ const ChatWidget = ({
         if (socket) {
             initSession();
         }
-    }, [socket, apiKey, apiSecret, apiUrl]);
+    }, [socket, apiKey, apiSecret, finalApiUrl]);
 
     useEffect(() => {
         if (isOpen) {
@@ -153,13 +170,25 @@ const ChatWidget = ({
         setMessage('');
         setIsLoading(true);
 
+        // Generate unique message ID for deduplication
+        const messageId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
         // Add optimistically so it shows up immediately
-        const optimisticMsg = { role: 'user', text: userMessage, timestamp: new Date() };
+        const optimisticMsg = {
+            role: 'user',
+            text: userMessage,
+            timestamp: new Date(),
+            messageId
+        };
+
+        // Add to processed immediately to prevent duplicate from socket broadcast
+        processedMessages.current.add(`msgid:${messageId}`);
+
         setChatHistory(prev => [...prev, optimisticMsg]);
 
         // Emit message via socket - server will broadcast to all clients
         if (socket) {
-            socket.emit('user-message', { sessionId, message: userMessage });
+            socket.emit('user-message', { sessionId, message: userMessage, messageId });
         }
 
         if (isTakenOver) {
@@ -174,13 +203,13 @@ const ChatWidget = ({
             if (apiSecret) headers['X-API-Secret'] = apiSecret;
 
             // Get AI response
-            const response = await fetch(apiUrl, {
+            const response = await fetch(finalApiUrl, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
                     message: userMessage,
                     sessionId,
-                    noSave: true // Let the socket handle DB persistence
+                    noSave: true
                 }),
             });
 
@@ -192,12 +221,24 @@ const ChatWidget = ({
                 setIsTakenOver(true);
                 toast.info('An admin has taken over this conversation');
             } else if (data.reply) {
+                // Generate unique message ID for bot message deduplication
+                const botMessageId = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
                 // Add bot message to local state immediately
-                const botMsg = { role: 'bot', text: data.reply, timestamp: new Date() };
+                const botMsg = {
+                    role: 'bot',
+                    text: data.reply,
+                    timestamp: new Date(),
+                    messageId: botMessageId
+                };
+
+                // Mark as processed to prevent duplicate when socket broadcasts back
+                processedMessages.current.add(`msgid:${botMessageId}`);
+
                 setChatHistory(prev => [...prev, botMsg]);
 
                 // Emit bot response via socket for admin and other clients
-                socket.emit('bot-message', { sessionId, message: data.reply });
+                socket.emit('bot-message', { sessionId, message: data.reply, messageId: botMessageId });
             }
         } catch (error) {
             console.error('Chat error:', error);
@@ -256,7 +297,7 @@ const ChatWidget = ({
                                         ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 rounded-tl-none border border-amber-200 dark:border-amber-800 shadow-sm'
                                         : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-100 dark:border-zinc-700 shadow-sm'
                                     }`}
-                                    style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
+                                    style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}
                                 >
                                     {chat.role === 'admin' && (
                                         <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">Admin</p>
@@ -264,12 +305,14 @@ const ChatWidget = ({
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
                                         components={{
-                                            p: ({ ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                            a: ({ ...props }) => <a className="text-emerald-400 hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />,
-                                            ul: ({ ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                                            ol: ({ ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                                            li: ({ ...props }) => <li className="mb-1" {...props} />,
-                                            strong: ({ ...props }) => <strong className="font-bold text-emerald-300" {...props} />,
+                                            /* eslint-disable no-unused-vars */
+                                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                            a: ({ node, ...props }) => <a className="text-emerald-400 hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />,
+                                            ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                                            ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                            strong: ({ node, ...props }) => <strong className="font-bold text-emerald-300" {...props} />,
+                                            /* eslint-enable no-unused-vars */
                                         }}
                                     >
                                         {chat.text}
