@@ -4,84 +4,89 @@ import ChatWidget from "@/components/ChatWidget";
 
 export default function Home() {
     return (
-        <div className="bg-gray-950 text-white min-h-screen font-sans">
+        <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/30">
 
             {/* Hero Section */}
-            <section className="relative overflow-hidden pt-24 pb-32">
-                {/* Background glow */}
+            <section className="relative overflow-hidden pt-20 pb-24 md:pt-32 md:pb-40">
+                {/* Background glow effects - softer in light mode */}
                 <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-orange-500/10 rounded-full blur-[120px]" />
-                    <div className="absolute bottom-0 right-0 w-72 h-72 bg-orange-600/10 rounded-full blur-[80px]" />
+                    <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[800px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[160px]" />
+                    <div className="absolute bottom-0 right-[-10%] w-[500px] h-[500px] bg-primary/5 dark:bg-primary/5 rounded-full blur-[120px]" />
                 </div>
 
                 <div className="container mx-auto px-6 relative z-10">
-                    <div className="flex flex-col lg:flex-row items-center gap-16">
-                        {/* Left: Text */}
-                        <div className="flex-1 text-center lg:text-left">
-                            <span className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-6">
-                                <Wrench size={12} /> Trusted Repair Experts Since 2015
-                            </span>
-                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6">
-                                We Fix It <br />
-                                <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-                                    Fast &amp; Right
+                    <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                        
+                        {/* Left: Content */}
+                        <div className="flex-1 text-center lg:text-left animate-in fade-in slide-in-from-left-8 duration-1000 ease-out">
+                            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] px-5 py-2.5 rounded-full mb-8 shadow-xl shadow-primary/5">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                </span>
+                                Trusted Repair Experts Since 2015
+                            </div>
+                            
+                            <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black leading-[1.1] mb-8 tracking-tighter">
+                                Excellence in <br className="hidden sm:block" />
+                                <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+                                    Device Repair
                                 </span>
                             </h1>
-                            <p className="text-gray-400 text-lg mb-10 max-w-xl">
-                                Professional repair services for phones, laptops, tablets &amp; more. Same-day repairs, manufacturer-grade parts, and a <strong className="text-white">90-day warranty</strong> on every fix.
+                            
+                            <p className="text-muted-foreground text-base sm:text-xl mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
+                                Professional restoration for phones, laptops, and tablets. We combine manufacturer-grade precision with same-day service and an industry-leading <strong className="text-foreground font-bold">90-day warranty</strong>.
                             </p>
+                            
                             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                                <Link
-                                    to="/login"
-                                    className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-semibold px-8 py-4 rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-orange-500/30"
-                                >
-                                    Book a Repair <ArrowRight size={18} />
-                                </Link>
                                 <a
                                     href="tel:+15551234567"
-                                    className="inline-flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold px-8 py-4 rounded-2xl transition-all duration-200"
+                                    className="inline-flex items-center justify-center gap-3 bg-accent hover:bg-accent/80 border border-border text-foreground font-bold px-10 py-5 rounded-2xl transition-all duration-300 backdrop-blur-md"
                                 >
-                                    <PhoneCall size={18} className="text-orange-400" /> Call Us Now
+                                    <PhoneCall size={20} className="text-primary" /> +1 (555) 123-4567
                                 </a>
                             </div>
 
-                            {/* Trust badges */}
-                            <div className="flex flex-wrap gap-6 mt-10 justify-center lg:justify-start">
+                            {/* Social proof */}
+                            <div className="flex flex-wrap gap-8 mt-14 justify-center lg:justify-start items-center opacity-60">
                                 {[
-                                    { icon: <CheckCircle size={16} className="text-orange-400" />, text: "5,000+ Repairs Done" },
-                                    { icon: <Star size={16} className="text-orange-400 fill-orange-400" />, text: "4.9 Rating" },
-                                    { icon: <Shield size={16} className="text-orange-400" />, text: "90-Day Warranty" },
+                                    { icon: <CheckCircle size={18} className="text-primary" />, text: "15k+ Repairs" },
+                                    { icon: <Star size={18} className="text-primary fill-primary" />, text: "4.9 Google Rating" },
+                                    { icon: <Shield size={18} className="text-primary" />, text: "Genuine Parts" },
                                 ].map((b, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm text-gray-400">
+                                    <div key={i} className="flex items-center gap-2.5 text-xs sm:text-sm font-bold text-muted-foreground whitespace-nowrap">
                                         {b.icon} {b.text}
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Right: Image card */}
-                        <div className="flex-1 flex justify-center">
-                            <div className="relative w-full max-w-md">
-                                <div className="bg-gray-900 border border-white/5 rounded-3xl p-6 shadow-2xl">
-                                    <div className="grid grid-cols-2 gap-4">
+                        {/* Right: Visual Element */}
+                        <div className="flex-1 w-full max-w-2xl mx-auto animate-in fade-in zoom-in-95 duration-1000 delay-200">
+                            <div className="relative group">
+                                {/* Decorative elements */}
+                                <div className="absolute -inset-1 bg-gradient-to-tr from-primary to-primary/40 rounded-[2.5rem] blur opacity-10 group-hover:opacity-25 transition duration-1000"></div>
+                                
+                                <div className="relative bg-card/50 backdrop-blur-2xl border border-border rounded-[2.5rem] p-6 sm:p-10 shadow-2xl">
+                                    <div className="grid grid-cols-2 gap-4 sm:gap-6">
                                         {[
-                                            { icon: <Smartphone size={32} />, label: "Phone Repair", time: "~1 hr" },
-                                            { icon: <Monitor size={32} />, label: "Laptop Repair", time: "~2 hrs" },
-                                            { icon: <Cpu size={32} />, label: "Electronics", time: "~3 hrs" },
-                                            { icon: <Wrench size={32} />, label: "Custom Fix", time: "Varies" },
+                                            { icon: <Smartphone size={32} />, label: "Smartphones", price: "From $49" },
+                                            { icon: <Monitor size={32} />, label: "Laptops", price: "From $89" },
+                                            { icon: <Cpu size={32} />, label: "Consoles", price: "From $79" },
+                                            { icon: <Zap size={32} />, label: "Express Fix", price: "Within 1hr" },
                                         ].map((s, i) => (
-                                            <div key={i} className="bg-gray-800/60 hover:bg-gray-800 border border-white/5 rounded-2xl p-5 text-center transition-colors cursor-pointer group">
-                                                <div className="text-orange-400 mb-3 flex justify-center group-hover:scale-110 transition-transform duration-200">
+                                            <div key={i} className="bg-background/20 dark:bg-white/5 border border-border rounded-3xl p-5 sm:p-8 flex flex-col items-center justify-center text-center hover:bg-background/40 dark:hover:bg-white/10 transition-all duration-300 cursor-default group/card">
+                                                <div className="text-primary mb-4 transform transition-transform duration-500 group-hover/card:scale-110 group-hover/card:rotate-3">
                                                     {s.icon}
                                                 </div>
-                                                <p className="text-sm font-semibold text-white">{s.label}</p>
-                                                <p className="text-xs text-gray-500 mt-1">{s.time}</p>
+                                                <p className="text-sm sm:text-base font-black text-foreground mb-1 tracking-tight">{s.label}</p>
+                                                <p className="text-[10px] sm:text-xs font-bold text-primary/70 uppercase tracking-widest">{s.price}</p>
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="mt-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl px-4 py-3 flex items-center gap-3">
-                                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                                        <span className="text-sm text-gray-300">Shop is <strong className="text-white">Open</strong> · Mon–Sat, 9 AM – 7 PM</span>
+                                    <div className="mt-8 bg-primary/10 border border-primary/20 rounded-2xl px-5 py-4 flex items-center justify-center gap-4">
+                                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
+                                        <span className="text-xs sm:text-sm font-bold text-muted-foreground tracking-tight">Active repairs in progress · Shop is <span className="text-green-500 font-black">Open Now</span></span>
                                     </div>
                                 </div>
                             </div>
@@ -91,62 +96,46 @@ export default function Home() {
             </section>
 
             {/* Services Section */}
-            <section className="py-24 border-t border-white/5 bg-gray-900/40">
+            <section id="services" className="py-32 relative bg-accent/20 dark:bg-gray-900/30">
                 <div className="container mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold mb-4">Our Services</h2>
-                        <p className="text-gray-400 max-w-xl mx-auto">From cracked screens to dead motherboards — we handle it all with precision and care.</p>
+                    <div className="max-w-3xl mb-20 text-center mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
+                        <h2 className="text-4xl sm:text-5xl font-black mb-6 tracking-tighter italic">Expert Services</h2>
+                        <p className="text-muted-foreground text-lg leading-relaxed font-medium">From precision microsoldering to complex motherboard restoration, we handle the repairs others won't touch.</p>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-6">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                         {[
                             {
                                 icon: <Smartphone size={28} />,
-                                title: "Phone Repair",
-                                desc: "Screen replacements, battery swaps, charging port fixes, water damage recovery — all major brands covered.",
-                                tag: "Most Popular"
+                                title: "Premium Phone Care",
+                                desc: "OLED screen restoration, high-capacity battery calibration, and advanced water damage mitigation for all flagship devices.",
+                                tag: "Flagship First"
                             },
                             {
                                 icon: <Monitor size={28} />,
-                                title: "Laptop & PC Repair",
-                                desc: "Keyboard replacements, RAM/SSD upgrades, OS reinstallation, overheating fixes and more.",
-                                tag: null
+                                title: "Enterprise Computing",
+                                desc: "Workstation upgrades, thermal management overhaul, and logical board diagnostics for MacBooks and PCs.",
+                                tag: "Pro Performance"
                             },
                             {
                                 icon: <Cpu size={28} />,
-                                title: "Electronics",
-                                desc: "Circuit board diagnostics, soldering, console repairs (PlayStation, Xbox, Nintendo) and custom projects.",
-                                tag: null
-                            },
-                            {
-                                icon: <Shield size={28} />,
-                                title: "Data Recovery",
-                                desc: "Lost your files? Our specialists can recover data from failed drives, phones, and corrupted storage.",
-                                tag: null
-                            },
-                            {
-                                icon: <Zap size={28} />,
-                                title: "Express Service",
-                                desc: "Need it done fast? Our express lane gets your device fixed and back in your hands within the hour.",
-                                tag: "Priority"
-                            },
-                            {
-                                icon: <Wrench size={28} />,
-                                title: "Custom Builds",
-                                desc: "Planning a custom PC or IoT project? We source parts and assemble to your exact specifications.",
-                                tag: null
+                                title: "Specialist Electronics",
+                                desc: "Component-level repair for gaming consoles, audio gear, and custom industrial controllers.",
+                                tag: "Precision Lab"
                             },
                         ].map((s, i) => (
-                            <div key={i} className="relative bg-gray-900 border border-white/5 hover:border-orange-500/30 rounded-3xl p-7 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/5 group">
-                                {s.tag && (
-                                    <span className="absolute top-5 right-5 bg-orange-500/10 text-orange-400 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-orange-500/20">
+                            <div key={i} className="group relative bg-card/40 backdrop-blur-sm border border-border hover:border-primary/40 rounded-[2.5rem] p-10 transition-all duration-500 hover:shadow-[0_0_40px_rgba(var(--primary-rgb),0.05)] overflow-hidden">
+                                <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+                                <div className="relative z-10 font-bold">
+                                    <span className="inline-block bg-primary/10 text-primary text-[10px] uppercase font-black tracking-widest px-4 py-2 rounded-full mb-8 border border-primary/20">
                                         {s.tag}
                                     </span>
-                                )}
-                                <div className="w-12 h-12 bg-orange-500/10 text-orange-400 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-orange-500/20 transition-colors">
-                                    {s.icon}
+                                    <div className="w-14 h-14 bg-accent/50 text-primary rounded-2xl flex items-center justify-center mb-8 shadow-inner shadow-primary/10">
+                                        {s.icon}
+                                    </div>
+                                    <h3 className="text-2xl font-black text-foreground mb-4 tracking-tight leading-none">{s.title}</h3>
+                                    <p className="text-muted-foreground leading-relaxed font-medium text-sm sm:text-base">{s.desc}</p>
                                 </div>
-                                <h3 className="text-lg font-bold text-white mb-3">{s.title}</h3>
-                                <p className="text-gray-400 text-sm leading-relaxed">{s.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -154,47 +143,57 @@ export default function Home() {
             </section>
 
             {/* Why Us Section */}
-            <section className="py-24 border-t border-white/5">
-                <div className="container mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
-                        <div>
-                            <h2 className="text-4xl font-bold mb-6">Why Matt's Repair Shop?</h2>
-                            <p className="text-gray-400 mb-10">We've been fixing devices in this community for over a decade. We treat your gear like it's our own.</p>
-                            <div className="space-y-5">
+            <section id="why-us" className="py-32 border-y border-border relative overflow-hidden">
+                <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
+                
+                <div className="container mx-auto px-6 relative z-10">
+                    <div className="grid lg:grid-cols-2 gap-20 items-center">
+                        <div className="animate-in fade-in slide-in-from-left-8 duration-700">
+                            <h2 className="text-4xl sm:text-5xl font-black mb-8 tracking-tighter">The Standard in <br /><span className="text-primary italic">Repair Integrity</span></h2>
+                            <p className="text-muted-foreground text-lg mb-12 font-medium">We don't just fix devices; we restore them to their original performance standards using a process focused on longevity.</p>
+                            
+                            <div className="grid sm:grid-cols-2 gap-6">
                                 {[
-                                    { title: "Transparent Pricing", desc: "No hidden fees. You get a quote before we start — always." },
-                                    { title: "Genuine Parts", desc: "We use quality, manufacturer-grade components on every repair." },
-                                    { title: "90-Day Warranty", desc: "If the same issue comes back, we fix it again for free." },
-                                    { title: "Certified Technicians", desc: "Our team is trained and certified across all major brands and platforms." },
+                                    { title: "Price Lock", desc: "Upfront quotes that never change." },
+                                    { icon: <Shield />, title: "3 Month Warranty", desc: "Full coverage on all repairs." },
+                                    { icon: <Wrench />, title: "OEM Grade Parts", desc: "Highest quality components." },
+                                    { icon: <CheckCircle />, title: "Master Techs", desc: "Certified industry experts." },
                                 ].map((item, i) => (
-                                    <div key={i} className="flex gap-4">
-                                        <div className="mt-1 w-5 h-5 shrink-0 flex items-center justify-center">
-                                            <CheckCircle size={20} className="text-orange-400" />
+                                    <div key={i} className="flex flex-col gap-3 p-6 bg-card border border-border hover:border-primary/20 rounded-3xl transition-all shadow-sm">
+                                        <div className="text-primary">
+                                            <CheckCircle size={24} strokeWidth={3} />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-white">{item.title}</p>
-                                            <p className="text-gray-400 text-sm mt-1">{item.desc}</p>
+                                            <p className="font-black text-foreground tracking-tight mb-1">{item.title}</p>
+                                            <p className="text-muted-foreground text-sm font-medium leading-snug">{item.desc}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Testimonials */}
-                        <div className="grid gap-5">
+                        {/* Stats / Proof */}
+                        <div className="grid gap-6">
                             {[
-                                { name: "Sarah K.", rating: 5, review: "Got my iPhone screen replaced in 45 mins. Perfect quality, fair price. Won't go anywhere else!" },
-                                { name: "James M.", rating: 5, review: "Recovered 3 years of photos from my dead laptop. I honestly thought it was gone forever. Amazing team." },
-                                { name: "Priya L.", rating: 5, review: "Fixed my MacBook motherboard when Apple wanted to charge me 3x more. Saved me a fortune." },
+                                { name: "Sarah K.", role: "Professional Photographer", review: "Recovery of my failed SSD saved thousands of dollars in client work. Truly world-class expertise." },
+                                { name: "James M.", role: "Software Engineer", review: "The board-level repair on my MacBook was flawless. They fixed what three other shops called 'unfixable'." },
                             ].map((t, i) => (
-                                <div key={i} className="bg-gray-900 border border-white/5 rounded-2xl p-6">
-                                    <div className="flex gap-1 mb-3">
-                                        {Array.from({ length: t.rating }).map((_, j) => (
-                                            <Star key={j} size={14} className="text-orange-400 fill-orange-400" />
+                                <div key={i} className="group bg-card/80 backdrop-blur-xl border border-border rounded-[2rem] p-8 sm:p-10 hover:border-primary/30 transition-all duration-300 shadow-xl">
+                                    <div className="flex gap-1 mb-6">
+                                        {[...Array(5)].map((_, j) => (
+                                            <Star key={j} size={16} className="text-primary fill-primary" />
                                         ))}
                                     </div>
-                                    <p className="text-gray-300 text-sm leading-relaxed mb-4">"{t.review}"</p>
-                                    <p className="text-sm font-semibold text-white">{t.name}</p>
+                                    <p className="text-foreground text-lg italic leading-relaxed mb-8 font-medium">"{t.review}"</p>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center font-black text-xl text-primary-foreground">
+                                            {t.name[0]}
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-foreground text-lg leading-none mb-1">{t.name}</p>
+                                            <p className="text-primary text-xs font-bold uppercase tracking-widest leading-none">{t.role}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -202,43 +201,62 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Location / CTA Section */}
-            <section className="py-24 border-t border-white/5 bg-gray-900/40">
+            {/* Final CTA Section */}
+            <section id="location" className="py-24 md:py-40">
                 <div className="container mx-auto px-6">
-                    <div className="bg-gradient-to-br from-orange-500/10 to-orange-700/5 border border-orange-500/20 rounded-3xl p-12 text-center">
-                        <h2 className="text-4xl font-bold mb-4">Visit Us or Book Online</h2>
-                        <p className="text-gray-400 mb-10 max-w-lg mx-auto">Drop in anytime or book a slot online. We're here to help you get back up and running.</p>
-                        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-10">
-                            <div className="flex items-center gap-3 text-gray-300">
-                                <MapPin size={20} className="text-orange-400" />
-                                <span>123 Repair Lane, Tech City, TC 45678</span>
+                    <div className="relative bg-card border border-border rounded-[3rem] p-10 md:p-20 overflow-hidden shadow-2xl">
+                        {/* Decorative glow */}
+                        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3" />
+                        
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <h2 className="text-4xl sm:text-6xl font-black mb-8 tracking-tighter text-foreground">Ready for a <span className="text-primary italic">Proper Fix?</span></h2>
+                            <p className="text-muted-foreground text-lg mb-12 max-w-xl font-medium leading-relaxed">No appointments necessary for diagnostics. Stop by our lab or call us to discuss your device's issues.</p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl mb-16">
+                                {[
+                                    { icon: <MapPin />, label: "Find Us", value: "123 Tech Lane, Silicon Valley", sub: "Free Parking Available" },
+                                    { icon: <Clock />, label: "Hours", value: "Mon-Sat: 9AM - 8PM", sub: "Emergency fixes on Sun" },
+                                    { icon: <PhoneCall />, label: "Direct Line", value: "+1 (555) 123-4567", sub: "Text friendly service" },
+                                ].map((item, i) => (
+                                    <div key={i} className="flex flex-col items-center gap-4 group">
+                                        <div className="w-14 h-14 bg-accent/80 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 border border-border shadow-sm">
+                                            {item.icon}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-primary mb-1">{item.label}</p>
+                                            <p className="text-foreground font-bold mb-1">{item.value}</p>
+                                            <p className="text-muted-foreground text-[10px] font-bold uppercase">{item.sub}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="flex items-center gap-3 text-gray-300">
-                                <Clock size={20} className="text-orange-400" />
-                                <span>Mon – Sat: 9 AM – 7 PM</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-gray-300">
-                                <PhoneCall size={20} className="text-orange-400" />
-                                <span>+1 (555) 123-4567</span>
-                            </div>
+
+                            <a
+                                href="tel:+15551234567"
+                                className="group inline-flex items-center gap-4 bg-primary hover:opacity-90 text-primary-foreground font-black px-12 py-6 rounded-[2rem] text-xl transition-all duration-300 hover:scale-[1.05] shadow-2xl shadow-primary/40"
+                            >
+                                Start Your Repair <ArrowRight className="group-hover:translate-x-2 transition-transform" strokeWidth={3} />
+                            </a>
                         </div>
-                        <Link
-                            to="/login"
-                            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-bold px-10 py-4 rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-orange-500/30"
-                        >
-                            Book a Repair Now <ArrowRight size={18} />
-                        </Link>
                     </div>
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className="border-t border-white/5 py-8">
-                <div className="container mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-2 text-white font-bold text-lg">
-                        <Wrench size={20} className="text-orange-400" /> Matt's Repair Shop
+            {/* Minimal Footer */}
+            <footer className="pb-12 border-t border-border pt-12">
+                <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
+                            <Wrench size={16} strokeWidth={3} />
+                        </div>
+                        <span className="text-xl font-black tracking-tighter text-foreground">Matt's Repair Shop</span>
                     </div>
-                    <p className="text-gray-600 text-sm">© {new Date().getFullYear()} Matt's Repair Shop. All rights reserved.</p>
+                    <div className="flex gap-8 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        <a href="#" className="hover:text-primary transition-colors">Safety</a>
+                        <a href="#" className="hover:text-primary transition-colors">Privacy</a>
+                        <a href="#" className="hover:text-primary transition-colors">Terms</a>
+                    </div>
+                    <p className="text-muted-foreground text-xs font-bold tracking-widest text-center">© {new Date().getFullYear()} REPAIR EXCELLENCE COLLABORATIVE</p>
                 </div>
             </footer>
 
@@ -248,8 +266,8 @@ export default function Home() {
                 apiKey={import.meta.env.VITE_API_KEY}
                 apiSecret={import.meta.env.VITE_API_SECRET}
                 title="Matt's Repair Shop"
-                subtitle="AI Support Bot"
-                greeting="Hello! Need a repair? I can help..."
+                subtitle="Expert AI Support"
+                greeting="Welcome to Matt's Repair Lab. How can I assist with your device restoration today?"
             />
         </div>
     );

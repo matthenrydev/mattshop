@@ -1,116 +1,147 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { Sun, Moon, Lock, EyeClosed, User, LogOut, ChevronDown, LayoutDashboard } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Sun, Moon, Menu, X, Phone, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
 function WrenchIcon() {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
         </svg>
     );
 }
 
 export default function Header() {
-    const { user, logout } = useAuth();
     const { dark, setDark } = useTheme();
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef(null);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
-        function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsDropdownOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // Prevent scrolling when menu is open
+    useEffect(() => {
+        if (isMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    }, [isMenuOpen]);
+
+    const navLinks = [
+        { name: "Services", href: "#services" },
+        { name: "Why Us", href: "#why-us" },
+        { name: "Reviews", href: "#reviews" },
+        { name: "About", href: "/about" },
+    ];
+
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-gray-950/80 backdrop-blur-xl text-white transition-colors duration-300">
-            <div className="container mx-auto px-6 flex justify-between items-center h-16">
-
+        <header className={`sticky top-0 z-[60] w-full transition-all duration-500 ${scrolled ? 'bg-background/80 backdrop-blur-2xl border-b border-border py-3' : 'bg-transparent py-6'} text-foreground`}>
+            <div className="container mx-auto px-6 flex justify-between items-center h-14">
+                
                 {/* Brand */}
-                <div className="flex items-center gap-8">
-                    <Link to="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-                        <span className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white">
-                            <WrenchIcon />
+                <Link to="/" className="flex items-center gap-3 active:scale-95 transition-transform group">
+                    <div className="w-11 h-11 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-xl shadow-primary/20 group-hover:rotate-12 transition-all duration-300">
+                        <WrenchIcon />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-2xl font-black leading-none tracking-tighter bg-gradient-to-r from-foreground via-foreground/80 to-foreground/50 bg-clip-text text-transparent">
+                            Matt's
                         </span>
-                        <span className="bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent">
-                            Matt's Repair
+                        <span className="text-[10px] font-extrabold uppercase tracking-[.3em] text-primary mt-1">
+                            Repair Experts
                         </span>
-                    </Link>
-                    <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-400">
-                        <Link to="/about" className="hover:text-white transition-colors">About</Link>
-                    </nav>
-                </div>
+                    </div>
+                </Link>
 
-                {/* Right side */}
-                <div className="flex items-center gap-3">
-                    {/* Theme toggle */}
-                    <button
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-                        onClick={() => setDark(!dark)}
-                        aria-label="Toggle theme"
-                    >
-                        {dark ? <EyeClosed size={18} className="text-yellow-400" /> : <Moon size={18} />}
-                    </button>
-
-                    {user ? (
-                        <div className="relative" ref={dropdownRef}>
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
+                {/* Desktop Navigation */}
+                <nav className="hidden lg:flex items-center gap-10">
+                    <div className="flex items-center gap-8 text-sm font-bold tracking-wide">
+                        {navLinks.map((link) => (
+                            <a 
+                                key={link.name} 
+                                href={link.href} 
+                                className="text-muted-foreground hover:text-foreground transition-all hover:translate-y-[-1px] active:translate-y-0"
                             >
-                                <div className="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center">
-                                    <User size={15} />
-                                </div>
-                                <span className="text-sm font-medium hidden sm:block text-gray-200">{user.username}</span>
-                                <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {isDropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                                    <div className="p-4 border-b border-white/5">
-                                        <p className="text-sm font-bold text-white truncate">{user.username}</p>
-                                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                                    </div>
-                                    <div className="p-2">
-                                        {user.role === 'admin' && (
-                                            <Link
-                                                to="/dashboard"
-                                                onClick={() => setIsDropdownOpen(false)}
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 rounded-xl hover:bg-white/5 transition-colors"
-                                            >
-                                                <LayoutDashboard size={15} className="text-orange-400" />
-                                                Dashboard
-                                            </Link>
-                                        )}
-                                        <button
-                                            onClick={() => {
-                                                logout();
-                                                setIsDropdownOpen(false);
-                                            }}
-                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 rounded-xl hover:bg-red-500/10 transition-colors"
-                                        >
-                                            <LogOut size={15} />
-                                            Sign Out
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <Link
-                            to="/login"
-                            className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-orange-500/20"
+                                {link.name}
+                            </a>
+                        ))}
+                    </div>
+                    <div className="h-6 w-[1px] bg-border mx-2" />
+                    <div className="flex items-center gap-4">
+                        <button
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all border border-transparent hover:border-border"
+                            onClick={() => setDark(!dark)}
+                            aria-label="Toggle theme"
                         >
-                            <Lock size={14} /> Book Repair
-                        </Link>
-                    )}
+                            {dark ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-slate-700" />}
+                        </button>
+                        <a
+                            href="#location"
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-primary hover:opacity-90 text-primary-foreground text-sm font-bold transition-all shadow-lg shadow-primary/20 active:scale-95 duration-200"
+                        >
+                            Book Now <ArrowRight size={15} />
+                        </a>
+                    </div>
+                </nav>
+
+                {/* Mobile Controls */}
+                <div className="flex lg:hidden items-center gap-3">
+                    <button
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center text-muted-foreground bg-accent border border-border active:scale-90 transition-all"
+                        onClick={() => setDark(!dark)}
+                    >
+                        {dark ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-slate-700" />}
+                    </button>
+                    <button 
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className={`w-11 h-11 flex items-center justify-center rounded-2xl outline-none active:scale-90 transition-all ${isMenuOpen ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-accent border border-border text-foreground'}`}
+                        aria-label="Menu toggle"
+                    >
+                        {isMenuOpen ? <X size={22} strokeWidth={3} /> : <Menu size={22} strokeWidth={3} />}
+                    </button>
+                </div>
+            </div>
+
+            {/* Mobile Menu Overlay */}
+            <div className={`fixed inset-0 z-50 lg:hidden overflow-hidden transition-all duration-500 ${isMenuOpen ? 'opacity-100 pointer-events-auto visible' : 'opacity-0 pointer-events-none invisible'}`}>
+                {/* Backdrop Layer */}
+                <div className="absolute inset-0 bg-background/95 backdrop-blur-3xl" />
+                
+                {/* Menu Content */}
+                <div className={`relative h-full flex flex-col justify-center px-10 gap-10 transition-transform duration-500 ${isMenuOpen ? 'translate-y-0' : 'translate-y-10'}`}>
+                    <div className="flex flex-col gap-8">
+                        {navLinks.map((link, i) => (
+                            <a 
+                                key={link.name} 
+                                href={link.href} 
+                                onClick={() => setIsMenuOpen(false)}
+                                className={`text-4xl font-black tracking-tighter text-foreground hover:text-primary transition-all transition-opacity duration-500 ${isMenuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
+                                style={{ transitionDelay: `${100 + i * 100}ms` }}
+                            >
+                                {link.name}
+                            </a>
+                        ))}
+                    </div>
+                    
+                    <div className={`flex flex-col gap-4 mt-10 transition-all duration-500 delay-500 ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                        <a 
+                            href="tel:+15551234567" 
+                            className="flex items-center justify-center gap-3 bg-accent border border-border py-6 rounded-[2rem] text-xl font-bold tracking-tight active:scale-95 transition-transform text-foreground"
+                        >
+                            <Phone className="text-primary" strokeWidth={2.5} size={20} /> Call Support
+                        </a>
+                        <a 
+                            href="#location"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="bg-primary py-6 rounded-[2rem] text-xl font-black text-center shadow-2xl shadow-primary/40 active:scale-95 transition-all text-primary-foreground"
+                        >
+                            Schedule Repair
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
