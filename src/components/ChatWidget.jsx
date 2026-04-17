@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
+import { Volume2, VolumeX } from 'lucide-react';
 
 const SESSION_STORAGE_KEY = 'bot_session_id';
 
@@ -33,8 +34,10 @@ const ChatWidget = ({
     const [isTakenOver, setIsTakenOver] = useState(false);
     const [socket, setSocket] = useState(null);
     const [isListening, setIsListening] = useState(false);
+    const [speakingMessageId, setSpeakingMessageId] = useState(null);
     const chatEndRef = useRef(null);
     const recognitionRef = useRef(null);
+    const synthRef = useRef(null);
     const processedMessages = useRef(new Set());
     const sessionIdRef = useRef(null);
 
@@ -318,6 +321,70 @@ const ChatWidget = ({
         }
     }, []);
 
+    // Text-to-Speech function
+    const speakMessage = useCallback((text, messageId) => {
+        // Stop any current speech
+        if (synthRef.current) {
+            window.speechSynthesis.cancel();
+        }
+
+        // If clicking the same message that's currently speaking, stop it
+        if (speakingMessageId === messageId) {
+            setSpeakingMessageId(null);
+            return;
+        }
+
+        const synth = window.speechSynthesis;
+        if (!synth) {
+            toast.error('Text-to-speech not supported in this browser');
+            return;
+        }
+
+        // Clean up markdown for better speech
+        const cleanText = text
+            .replace(/[#*_`[\]]/g, '') // Remove markdown syntax
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Replace links with just text
+            .replace(/https?:\/\/\S+/g, 'link') // Replace URLs
+            .trim();
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.pitch = 1; // Natural pitch
+        utterance.volume = 1;
+
+        // Try to find a female voice
+        const voices = synth.getVoices();
+        const femaleVoice = voices.find(v => 
+            v.name.toLowerCase().includes('female') ||
+            v.name.toLowerCase().includes('woman') ||
+            v.name.toLowerCase().includes('samantha') ||
+            v.name.toLowerCase().includes('victoria') ||
+            v.name.toLowerCase().includes('joanna') ||
+            v.name.toLowerCase().includes('karen') ||
+            (v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
+        );
+        
+        if (femaleVoice) {
+            utterance.voice = femaleVoice;
+        }
+
+        utterance.onstart = () => {
+            setSpeakingMessageId(messageId);
+        };
+
+        utterance.onend = () => {
+            setSpeakingMessageId(null);
+        };
+
+        utterance.onerror = () => {
+            setSpeakingMessageId(null);
+            toast.error('Failed to play audio');
+        };
+
+        synthRef.current = utterance;
+        synth.speak(utterance);
+    }, [speakingMessageId]);
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!message.trim() || isLoading || !sessionId || !socket) return;
@@ -394,6 +461,30 @@ const ChatWidget = ({
                                     >
                                         {chat.text}
                                     </ReactMarkdown>
+                                    {/* Speaker icon for bot messages */}
+                                    {chat.role === 'bot' && (
+                                        <button
+                                            onClick={() => speakMessage(chat.text, index)}
+                                            className={`mt-2 flex items-center gap-1.5 text-[10px] font-medium transition-all ${
+                                                speakingMessageId === index
+                                                    ? 'text-emerald-400'
+                                                    : 'text-zinc-400 hover:text-emerald-500'
+                                            }`}
+                                            title={speakingMessageId === index ? 'Click to stop' : 'Tap to listen'}
+                                        >
+                                            {speakingMessageId === index ? (
+                                                <>
+                                                    <VolumeX size={12} className="animate-pulse" />
+                                                    <span>Stop</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Volume2 size={12} />
+                                                    <span>Listen</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
