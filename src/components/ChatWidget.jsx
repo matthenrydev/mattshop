@@ -32,7 +32,9 @@ const ChatWidget = ({
     const [sessionId, setSessionId] = useState(null);
     const [isTakenOver, setIsTakenOver] = useState(false);
     const [socket, setSocket] = useState(null);
+    const [isListening, setIsListening] = useState(false);
     const chatEndRef = useRef(null);
+    const recognitionRef = useRef(null);
     const processedMessages = useRef(new Set());
     const sessionIdRef = useRef(null);
 
@@ -162,11 +164,9 @@ const ChatWidget = ({
         }
     }, [chatHistory, isOpen, scrollToBottom]);
 
-    const handleSend = async (e) => {
-        e.preventDefault();
-        if (!message.trim() || isLoading || !sessionId || !socket) return;
+    const sendMessage = useCallback(async (msgToSend) => {
+        if (!msgToSend.trim() || isLoading || !sessionId || !socket) return;
 
-        const userMessage = message.trim();
         setMessage('');
         setIsLoading(true);
 
@@ -176,7 +176,7 @@ const ChatWidget = ({
         // Add optimistically so it shows up immediately
         const optimisticMsg = {
             role: 'user',
-            text: userMessage,
+            text: msgToSend,
             timestamp: new Date(),
             messageId
         };
@@ -188,7 +188,7 @@ const ChatWidget = ({
 
         // Emit message via socket - server will broadcast to all clients
         if (socket) {
-            socket.emit('user-message', { sessionId, message: userMessage, messageId });
+            socket.emit('user-message', { sessionId, message: msgToSend, messageId });
         }
 
         if (isTakenOver) {
@@ -207,7 +207,7 @@ const ChatWidget = ({
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
-                    message: userMessage,
+                    message: msgToSend,
                     sessionId,
                     noSave: true
                 }),
@@ -246,6 +246,83 @@ const ChatWidget = ({
         } finally {
             setIsLoading(false);
         }
+    }, [isLoading, sessionId, socket, isTakenOver, apiKey, apiSecret, finalApiUrl]);
+
+    const startListening = useCallback(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            toast.error('Speech Recognition not supported in this browser');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+
+        recognitionRef.current = recognition;
+
+        let finalTranscript = '';
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            finalTranscript = '';
+        };
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            // Show interim results in input
+            const displayText = finalTranscript + interimTranscript;
+            setMessage(displayText);
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            if (event.error !== 'aborted') {
+                toast.error(`Speech recognition error: ${event.error}`);
+            }
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+            recognitionRef.current = null;
+
+            // Auto-send the message if we have text
+            if (finalTranscript.trim() && sessionId && socket) {
+                // Small delay to ensure UI updates first
+                setTimeout(() => {
+                    const trimmedMessage = finalTranscript.trim();
+                    sendMessage(trimmedMessage);
+                }, 100);
+            }
+        };
+
+        recognition.start();
+    }, [sessionId, socket, sendMessage]);
+
+    const stopListening = useCallback(() => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+    }, []);
+
+    const handleSend = async (e) => {
+        e.preventDefault();
+        if (!message.trim() || isLoading || !sessionId || !socket) return;
+        const userMessage = message.trim();
+        await sendMessage(userMessage);
     };
 
     return (
@@ -342,17 +419,35 @@ const ChatWidget = ({
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 placeholder={isTakenOver ? "Type your message..." : "Ask me anything..."}
-                                className="w-full p-3 pr-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-emerald-500 text-md text-black dark:text-white"
+                                className="w-full p-3 pr-20 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-emerald-500 text-md text-black dark:text-white"
                             />
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                                </svg>
-                            </button>
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={isListening ? stopListening : startListening}
+                                    className={`p-1.5 transition-all duration-200 ${isListening ? 'text-blue-500 scale-110' : 'text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400'}`}
+                                    title={isListening ? 'Listening... Click to stop' : 'Click and speak to send message'}
+                                >
+                                    {isListening ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                                        </svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="p-1.5 text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
