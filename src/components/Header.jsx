@@ -32,10 +32,10 @@ export default function Header() {
     }, [isMenuOpen]);
 
     const navLinks = [
-        { name: "Services", href: "#services" },
-        { name: "Why Us", href: "#why-us" },
-        { name: "Reviews", href: "#reviews" },
+        { name: "Home", href: "/" },
+        { name: "Services", href: "/services" },
         { name: "About", href: "/about" },
+        { name: "Contact", href: "/contact" },
     ];
 
     return (
@@ -61,13 +61,13 @@ export default function Header() {
                 <nav className="hidden lg:flex items-center gap-10">
                     <div className="flex items-center gap-8 text-sm font-bold tracking-wide">
                         {navLinks.map((link) => (
-                            <a 
-                                key={link.name} 
-                                href={link.href} 
+                            <Link
+                                key={link.name}
+                                to={link.href}
                                 className="text-muted-foreground hover:text-foreground transition-all hover:translate-y-[-1px] active:translate-y-0"
                             >
                                 {link.name}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                     <div className="h-6 w-[1px] bg-border mx-2" />
@@ -79,12 +79,12 @@ export default function Header() {
                         >
                             {dark ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-slate-700" />}
                         </button>
-                        <a
-                            href="#location"
+                        <Link
+                            to="/contact"
                             className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-primary hover:opacity-90 text-primary-foreground text-sm font-bold transition-all shadow-lg shadow-primary/20 active:scale-95 duration-200"
                         >
                             Book Now <ArrowRight size={15} />
-                        </a>
+                        </Link>
                     </div>
                 </nav>
 
@@ -115,15 +115,15 @@ export default function Header() {
                 <div className={`relative h-full flex flex-col justify-center px-10 gap-10 transition-transform duration-500 ${isMenuOpen ? 'translate-y-0' : 'translate-y-10'}`}>
                     <div className="flex flex-col gap-8">
                         {navLinks.map((link, i) => (
-                            <a 
-                                key={link.name} 
-                                href={link.href} 
+                            <Link
+                                key={link.name}
+                                to={link.href}
                                 onClick={() => setIsMenuOpen(false)}
                                 className={`text-4xl font-black tracking-tighter text-foreground hover:text-primary transition-all transition-opacity duration-500 ${isMenuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
                                 style={{ transitionDelay: `${100 + i * 100}ms` }}
                             >
                                 {link.name}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                     
@@ -134,13 +134,13 @@ export default function Header() {
                         >
                             <Phone className="text-primary" strokeWidth={2.5} size={20} /> Call Support
                         </a>
-                        <a 
-                            href="#location"
+                        <Link
+                            to="/contact"
                             onClick={() => setIsMenuOpen(false)}
                             className="bg-primary py-6 rounded-[2rem] text-xl font-black text-center shadow-2xl shadow-primary/40 active:scale-95 transition-all text-primary-foreground"
                         >
                             Schedule Repair
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
