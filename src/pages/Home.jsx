@@ -56,16 +56,16 @@ function AnimatedLaptop() {
                         fill="url(#metal)"
                         className="animate-pulse-subtle"
                     />
-                    
+
                     {/* Keyboard Area */}
                     <rect x="30" y="85" width="140" height="10" rx="2" fill="#404040" opacity="0.8" />
-                    
+
                     {/* Screen Back */}
                     <rect x="25" y="10" width="150" height="70" rx="5" fill="#2a2a3a" />
-                    
+
                     {/* Screen Display */}
                     <rect x="30" y="15" width="140" height="60" rx="2" fill="url(#screen)" />
-                    
+
                     {/* Code Lines Animation */}
                     <g className="text-primary">
                         {[...Array(5)].map((_, i) => (
@@ -87,7 +87,7 @@ function AnimatedLaptop() {
                         <circle cx="180" cy="50" r="8" fill="currentColor" opacity="0.8" />
                         <rect x="176" y="46" width="8" height="8" fill="#fff" opacity="0.3" />
                     </g>
-                    
+
                     <g className="animate-orbit-reverse text-secondary" style={{ animationDelay: '-2s' }}>
                         <circle cx="20" cy="40" r="6" fill="currentColor" opacity="0.6" />
                         <Microchip size="8" x="16" y="36" />
@@ -200,7 +200,7 @@ export default function Home() {
                 <div className="absolute inset-0 pointer-events-none">
                     {/* Animated Grid */}
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent_1px,var(--border)_1px),linear-gradient(to_bottom,transparent_1px,var(--border)_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
-                    
+
                     {/* Glowing Orbs */}
                     <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse-subtle" />
                     <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/20 rounded-full blur-[100px] animate-pulse-subtle" style={{ animationDelay: '1s' }} />
@@ -209,7 +209,7 @@ export default function Home() {
 
                 <div className="container mx-auto px-6 relative z-10 py-20">
                     <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-8">
-                        
+
                         {/* Left: Content */}
                         <div className="flex-1 text-center lg:text-left">
                             {/* Animated Badge */}
@@ -220,30 +220,23 @@ export default function Home() {
                                 </span>
                                 <span className="text-xs font-bold uppercase tracking-wider">Trusted Since 2015</span>
                             </div>
-                            
+
                             {/* Main Headline with Character Animation */}
-                            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.05] mb-6 tracking-tighter">
+                            <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-6xl font-black leading-[1.05] mb-6 tracking-tighter">
                                 <span className="block">We Don&apos;t Just</span>
                                 <span className="block bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent">
                                     Fix Devices
                                 </span>
                                 <span className="block text-muted-foreground">We Restore Them</span>
                             </h1>
-                            
+
                             <p className="text-muted-foreground text-lg sm:text-xl mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                                Precision microsoldering. Board-level diagnostics. Same-day turnaround. 
+                                Precision microsoldering. Board-level diagnostics. Same-day turnaround.
                                 <span className="text-foreground font-semibold"> 15,000+ devices</span> brought back to life.
                             </p>
-                            
+
                             {/* CTA Buttons */}
                             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-                                <Link
-                                    to="/contact"
-                                    className="group inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 py-4 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
-                                >
-                                    Get Free Quote
-                                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                </Link>
                                 <a
                                     href="tel:+15551234567"
                                     className="group inline-flex items-center justify-center gap-2 bg-card border-2 border-border hover:border-primary/50 text-foreground font-bold px-8 py-4 rounded-2xl transition-all duration-300"
@@ -295,7 +288,7 @@ export default function Home() {
                         <h2 className="text-4xl sm:text-5xl font-black mb-6 tracking-tighter italic">Expert Services</h2>
                         <p className="text-muted-foreground text-lg leading-relaxed font-medium">From precision microsoldering to complex motherboard restoration, we handle the repairs others won't touch.</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                         {[
                             {
@@ -338,13 +331,13 @@ export default function Home() {
             {/* Why Us Section */}
             <section id="why-us" className="py-32 border-y border-border relative overflow-hidden">
                 <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
-                
+
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-20 items-center">
                         <div className="animate-in fade-in slide-in-from-left-8 duration-700">
                             <h2 className="text-4xl sm:text-5xl font-black mb-8 tracking-tighter">The Standard in <br /><span className="text-primary italic">Repair Integrity</span></h2>
                             <p className="text-muted-foreground text-lg mb-12 font-medium">We don't just fix devices; we restore them to their original performance standards using a process focused on longevity.</p>
-                            
+
                             <div className="grid sm:grid-cols-2 gap-6">
                                 {[
                                     { title: "Price Lock", desc: "Upfront quotes that never change." },
@@ -400,11 +393,11 @@ export default function Home() {
                     <div className="relative bg-card border border-border rounded-[3rem] p-10 md:p-20 overflow-hidden shadow-2xl">
                         {/* Decorative glow */}
                         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3" />
-                        
+
                         <div className="relative z-10 flex flex-col items-center text-center">
                             <h2 className="text-4xl sm:text-6xl font-black mb-8 tracking-tighter text-foreground">Ready for a <span className="text-primary italic">Proper Fix?</span></h2>
                             <p className="text-muted-foreground text-lg mb-12 max-w-xl font-medium leading-relaxed">No appointments necessary for diagnostics. Stop by our lab or call us to discuss your device's issues.</p>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl mb-16">
                                 {[
                                     { icon: <MapPin />, label: "Find Us", value: "123 Tech Lane, Silicon Valley", sub: "Free Parking Available" },
