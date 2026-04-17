@@ -48,11 +48,11 @@ export default function Header() {
                         <WrenchIcon />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-2xl font-black leading-none tracking-tighter bg-gradient-to-r from-foreground via-foreground/80 to-foreground/50 bg-clip-text text-transparent">
+                        <span className="text-xl font-black leading-none tracking-tighter bg-gradient-to-r from-foreground via-foreground/80 to-foreground/50 bg-clip-text text-transparent">
                             Matt's
                         </span>
-                        <span className="text-[10px] font-extrabold uppercase tracking-[.3em] text-primary mt-1">
-                            Repair Experts
+                        <span className="text-[12px] font-extrabold uppercase tracking-[.3em] text-primary mt-1">
+                            Repair
                         </span>
                     </div>
                 </Link>
@@ -90,12 +90,6 @@ export default function Header() {
 
                 {/* Mobile Controls */}
                 <div className="flex lg:hidden items-center gap-3">
-                    <button
-                        className="w-10 h-10 rounded-2xl flex items-center justify-center text-muted-foreground bg-accent border border-border active:scale-90 transition-all"
-                        onClick={() => setDark(!dark)}
-                    >
-                        {dark ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-slate-700" />}
-                    </button>
                     <button 
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         className={`w-11 h-11 flex items-center justify-center rounded-2xl outline-none active:scale-90 transition-all ${isMenuOpen ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-accent border border-border text-foreground'}`}
@@ -125,6 +119,19 @@ export default function Header() {
                                 {link.name}
                             </Link>
                         ))}
+                        {/* Theme toggle in mobile nav */}
+                        <button
+                            onClick={() => {
+                                setDark(!dark);
+                                setIsMenuOpen(false);
+                            }}
+                            className={`flex items-center gap-3 text-4xl font-black tracking-tighter text-foreground hover:text-primary transition-all transition-opacity duration-500 ${isMenuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
+                            style={{ transitionDelay: `${100 + navLinks.length * 100}ms` }}
+                        >
+                            Theme
+                            {dark ? <Sun size={32} className="text-yellow-500" /> : <Moon size={32} className="text-slate-500" />}
+                            
+                        </button>
                     </div>
                     
                     <div className={`flex flex-col gap-4 mt-10 transition-all duration-500 delay-500 ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>

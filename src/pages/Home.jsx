@@ -422,7 +422,7 @@ export default function Home() {
                                     to="/contact"
                                     className="group inline-flex items-center justify-center gap-4 bg-primary hover:opacity-90 text-primary-foreground font-black px-12 py-6 rounded-[2rem] text-xl transition-all duration-300 hover:scale-[1.05] shadow-2xl shadow-primary/40"
                                 >
-                                    Start Your Repair <ArrowRight className="group-hover:translate-x-2 transition-transform" strokeWidth={3} />
+                                    Repair <ArrowRight className="group-hover:translate-x-2 transition-transform" strokeWidth={3} />
                                 </Link>
                                 <a
                                     href="tel:+15551234567"
