@@ -434,58 +434,74 @@ const ChatWidget = ({
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth bg-zinc-50 dark:bg-black/20">
                         {chatHistory.map((chat, index) => (
-                            <div key={index} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${chat.role === 'user'
-                                    ? 'bg-emerald-600 text-white rounded-tr-none shadow-sm'
-                                    : chat.role === 'admin'
-                                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 rounded-tl-none border border-amber-200 dark:border-amber-800 shadow-sm'
-                                        : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-100 dark:border-zinc-700 shadow-sm'
-                                    }`}
-                                    style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}
-                                >
-                                    {chat.role === 'admin' && (
-                                        <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">Admin</p>
-                                    )}
-                                    <ReactMarkdown
-                                        remarkPlugins={[remarkGfm]}
-                                        components={{
-                                            /* eslint-disable no-unused-vars */
-                                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                            a: ({ node, ...props }) => <a className="text-emerald-400 hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />,
-                                            ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                                            ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                                            strong: ({ node, ...props }) => <strong className="font-bold text-emerald-300" {...props} />,
-                                            /* eslint-enable no-unused-vars */
-                                        }}
+                            <div key={index}>
+                                {/* Message */}
+                                <div className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${chat.role === 'user'
+                                        ? 'bg-emerald-600 text-white rounded-tr-none shadow-sm'
+                                        : chat.role === 'admin'
+                                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 rounded-tl-none border border-amber-200 dark:border-amber-800 shadow-sm'
+                                            : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-100 dark:border-zinc-700 shadow-sm'
+                                        }`}
+                                        style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}
                                     >
-                                        {chat.text}
-                                    </ReactMarkdown>
-                                    {/* Speaker icon for bot messages */}
-                                    {chat.role === 'bot' && (
-                                        <button
-                                            onClick={() => speakMessage(chat.text, index)}
-                                            className={`mt-2 flex items-center gap-1.5 text-[10px] font-medium transition-all ${
-                                                speakingMessageId === index
-                                                    ? 'text-emerald-400'
-                                                    : 'text-zinc-400 hover:text-emerald-500'
-                                            }`}
-                                            title={speakingMessageId === index ? 'Click to stop' : 'Tap to listen'}
+                                        {chat.role === 'admin' && (
+                                            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">Admin</p>
+                                        )}
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                /* eslint-disable no-unused-vars */
+                                                p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                a: ({ node, ...props }) => <a className="text-emerald-400 hover:underline break-all" target="_blank" rel="noopener noreferrer" {...props} />,
+                                                ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                                                ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                                                li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                                strong: ({ node, ...props }) => <strong className="font-bold text-emerald-300" {...props} />,
+                                                /* eslint-enable no-unused-vars */
+                                            }}
                                         >
-                                            {speakingMessageId === index ? (
-                                                <>
-                                                    <VolumeX size={12} className="animate-pulse" />
-                                                    <span>Stop</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Volume2 size={12} />
-                                                    <span>Listen</span>
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
+                                            {chat.text}
+                                        </ReactMarkdown>
+                                        {/* Speaker icon for bot messages */}
+                                        {chat.role === 'bot' && (
+                                            <button
+                                                onClick={() => speakMessage(chat.text, index)}
+                                                className={`mt-2 flex items-center gap-1.5 text-[10px] font-medium transition-all ${
+                                                    speakingMessageId === index
+                                                        ? 'text-emerald-400'
+                                                        : 'text-zinc-400 hover:text-emerald-500'
+                                                }`}
+                                                title={speakingMessageId === index ? 'Click to stop' : 'Tap to listen'}
+                                            >
+                                                {speakingMessageId === index ? (
+                                                    <>
+                                                        <VolumeX size={12} className="animate-pulse" />
+                                                        <span>Stop</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Volume2 size={12} />
+                                                        <span>Listen</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
+                                {/* Google Ad after user message (before next message) */}
+                                {chat.role === 'user' && index < chatHistory.length - 1 && chatHistory[index + 1]?.role !== 'user' && (
+                                    <div className="my-3 mx-auto w-full max-w-[280px]">
+                                        <ins 
+                                            className="adsbygoogle"
+                                            style={{ display: 'block', textAlign: 'center' }}
+                                            data-ad-client="ca-pub-5411241953341855"
+                                            data-ad-slot="8004099823"
+                                            data-ad-format="auto"
+                                            data-full-width-responsive="true"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ))}
                         {isLoading && (

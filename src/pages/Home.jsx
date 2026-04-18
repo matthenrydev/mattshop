@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { Wrench, Smartphone, Monitor, Cpu, CheckCircle, Star, PhoneCall, MapPin, Clock, ArrowRight, Shield, Zap, Cog, Microchip } from "lucide-react";
 import ChatWidget from "@/components/ChatWidget";
 
@@ -144,6 +145,15 @@ function AnimatedLaptop() {
 }
 
 export default function Home() {
+    useEffect(() => {
+        // Activate Google Ads after component mounts
+        try {
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
+            console.error('AdSense error:', e);
+        }
+    }, []);
+
     return (
         <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary/30">
             <style>{`
@@ -281,6 +291,20 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* Google Ad Section 1 - After Hero */}
+            <section className="py-8 bg-background">
+                <div className="container mx-auto px-6">
+                    <ins 
+                        className="adsbygoogle"
+                        style={{ display: 'block' }}
+                        data-ad-client="ca-pub-5411241953341855"
+                        data-ad-slot="8004099823"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"
+                    />
+                </div>
+            </section>
+
             {/* Services Section */}
             <section id="services" className="py-32 relative bg-accent/20 dark:bg-gray-900/30">
                 <div className="container mx-auto px-6">
@@ -325,6 +349,20 @@ export default function Home() {
                             </div>
                         ))}
                     </div>
+                </div>
+            </section>
+
+            {/* Google Ad Section 2 - After Services */}
+            <section className="py-8 bg-background">
+                <div className="container mx-auto px-6">
+                    <ins 
+                        className="adsbygoogle"
+                        style={{ display: 'block' }}
+                        data-ad-client="ca-pub-5411241953341855"
+                        data-ad-slot="8004099823"
+                        data-ad-format="auto"
+                        data-full-width-responsive="true"
+                    />
                 </div>
             </section>
 
