@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 import { Volume2, VolumeX } from 'lucide-react';
+import MockAd from '@/components/MockAd';
 
 const SESSION_STORAGE_KEY = 'bot_session_id';
 
@@ -491,15 +492,8 @@ const ChatWidget = ({
                                 </div>
                                 {/* Google Ad after user message (before next message) */}
                                 {chat.role === 'user' && index < chatHistory.length - 1 && chatHistory[index + 1]?.role !== 'user' && (
-                                    <div className="my-3 mx-auto w-full max-w-[280px]">
-                                        <ins 
-                                            className="adsbygoogle"
-                                            style={{ display: 'block', textAlign: 'center' }}
-                                            data-ad-client="ca-pub-5411241953341855"
-                                            data-ad-slot="8004099823"
-                                            data-ad-format="auto"
-                                            data-full-width-responsive="true"
-                                        />
+                                    <div className="my-2 mt-4 w-full max-w-[280px] mx-auto">
+                                        <MockAd />
                                     </div>
                                 )}
                             </div>
