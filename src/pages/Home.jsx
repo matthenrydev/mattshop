@@ -472,9 +472,6 @@ export default function Home() {
 
             {/* Chat Widget */}
             <ChatWidget
-                apiBaseUrl={import.meta.env.VITE_API_BASE_URL}
-                apiKey={import.meta.env.VITE_API_KEY}
-                apiSecret={import.meta.env.VITE_API_SECRET}
                 title="Matt's Repair Shop"
                 subtitle="Expert AI Support"
                 greeting="Welcome to Matt's Repair Lab. How can I assist with your device restoration today?"

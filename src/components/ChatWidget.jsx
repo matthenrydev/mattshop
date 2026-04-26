@@ -5,14 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
-import { Volume2, VolumeX } from 'lucide-react';
 
 const SESSION_STORAGE_KEY = 'bot_session_id';
 
 const ChatWidget = ({
-    apiBaseUrl = '',
-    apiKey,
-    apiSecret,
+    apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '',
+    apiKey = import.meta.env.VITE_API_KEY || '',
+    apiSecret = import.meta.env.VITE_API_SECRET || '',
     apiUrl,
     socketUrl,
     socketPath = '/api/socket',
@@ -34,12 +33,11 @@ const ChatWidget = ({
     const [isTakenOver, setIsTakenOver] = useState(false);
     const [socket, setSocket] = useState(null);
     const [isListening, setIsListening] = useState(false);
-    const [speakingMessageId, setSpeakingMessageId] = useState(null);
     const chatEndRef = useRef(null);
     const recognitionRef = useRef(null);
-    const synthRef = useRef(null);
     const processedMessages = useRef(new Set());
     const sessionIdRef = useRef(null);
+    const pollIntervalRef = useRef(null);
 
     const scrollToBottom = useCallback(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -167,6 +165,78 @@ const ChatWidget = ({
         }
     }, [chatHistory, isOpen, scrollToBottom]);
 
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+            }
+        };
+    }, []);
+
+    // Poll for job completion
+    const pollForResponse = useCallback(async (jobId, botMessageId) => {
+        const queueUrl = finalApiUrl.replace('/api/chat', '/api/chat/queue');
+        const headers = {};
+        if (apiKey) headers['X-API-Key'] = apiKey;
+        if (apiSecret) headers['X-API-Secret'] = apiSecret;
+
+        let attempts = 0;
+        const maxAttempts = 60; // 60 seconds max
+
+        pollIntervalRef.current = setInterval(async () => {
+            attempts++;
+
+            if (attempts > maxAttempts) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+                setIsLoading(false);
+                toast.error('Response timed out. Please try again.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${queueUrl}?jobId=${jobId}&sessionId=${sessionId}`, {
+                    headers: Object.keys(headers).length > 0 ? headers : undefined
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                if (data.status === 'completed' && data.reply) {
+                    clearInterval(pollIntervalRef.current);
+                    pollIntervalRef.current = null;
+                    setIsLoading(false);
+
+                    // Add bot message to local state
+                    const botMsg = {
+                        role: 'bot',
+                        text: data.reply,
+                        timestamp: new Date(),
+                        messageId: botMessageId
+                    };
+
+                    processedMessages.current.add(`msgid:${botMessageId}`);
+                    setChatHistory(prev => [...prev, botMsg]);
+
+                    // Emit bot response via socket
+                    if (socket) {
+                        socket.emit('bot-message', { sessionId, message: data.reply, messageId: botMessageId });
+                    }
+                } else if (data.status === 'failed') {
+                    clearInterval(pollIntervalRef.current);
+                    pollIntervalRef.current = null;
+                    setIsLoading(false);
+                    toast.error('Failed to get response. Please try again.');
+                }
+                // If still processing, continue polling
+            } catch (error) {
+                console.error('Poll error:', error);
+            }
+        }, 1000); // Poll every second
+    }, [sessionId, socket, finalApiUrl, apiKey, apiSecret]);
+
     const sendMessage = useCallback(async (msgToSend) => {
         if (!msgToSend.trim() || isLoading || !sessionId || !socket) return;
 
@@ -205,8 +275,9 @@ const ChatWidget = ({
             if (apiKey) headers['X-API-Key'] = apiKey;
             if (apiSecret) headers['X-API-Secret'] = apiSecret;
 
-            // Get AI response
-            const response = await fetch(finalApiUrl, {
+            // Use queue API
+            const queueUrl = finalApiUrl.replace('/api/chat', '/api/chat/queue');
+            const response = await fetch(queueUrl, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
@@ -216,40 +287,27 @@ const ChatWidget = ({
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to fetch response');
+            if (!response.ok) throw new Error('Failed to queue message');
 
             const data = await response.json();
 
             if (data.takenOver) {
                 setIsTakenOver(true);
                 toast.info('An admin has taken over this conversation');
-            } else if (data.reply) {
-                // Generate unique message ID for bot message deduplication
+                setIsLoading(false);
+            } else if (data.jobId) {
+                // Generate bot message ID for deduplication
                 const botMessageId = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-                // Add bot message to local state immediately
-                const botMsg = {
-                    role: 'bot',
-                    text: data.reply,
-                    timestamp: new Date(),
-                    messageId: botMessageId
-                };
-
-                // Mark as processed to prevent duplicate when socket broadcasts back
-                processedMessages.current.add(`msgid:${botMessageId}`);
-
-                setChatHistory(prev => [...prev, botMsg]);
-
-                // Emit bot response via socket for admin and other clients
-                socket.emit('bot-message', { sessionId, message: data.reply, messageId: botMessageId });
+                
+                // Start polling for response
+                pollForResponse(data.jobId, botMessageId);
             }
         } catch (error) {
             console.error('Chat error:', error);
-            toast.error('Failed to get response. Please try again.');
-        } finally {
+            toast.error('Failed to send message. Please try again.');
             setIsLoading(false);
         }
-    }, [isLoading, sessionId, socket, isTakenOver, apiKey, apiSecret, finalApiUrl]);
+    }, [isLoading, sessionId, socket, isTakenOver, apiKey, apiSecret, finalApiUrl, pollForResponse]);
 
     const startListening = useCallback(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -320,70 +378,6 @@ const ChatWidget = ({
             recognitionRef.current.stop();
         }
     }, []);
-
-    // Text-to-Speech function
-    const speakMessage = useCallback((text, messageId) => {
-        // Stop any current speech
-        if (synthRef.current) {
-            window.speechSynthesis.cancel();
-        }
-
-        // If clicking the same message that's currently speaking, stop it
-        if (speakingMessageId === messageId) {
-            setSpeakingMessageId(null);
-            return;
-        }
-
-        const synth = window.speechSynthesis;
-        if (!synth) {
-            toast.error('Text-to-speech not supported in this browser');
-            return;
-        }
-
-        // Clean up markdown for better speech
-        const cleanText = text
-            .replace(/[#*_`[\]]/g, '') // Remove markdown syntax
-            .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Replace links with just text
-            .replace(/https?:\/\/\S+/g, 'link') // Replace URLs
-            .trim();
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.rate = 0.9; // Slightly slower for clarity
-        utterance.pitch = 1; // Natural pitch
-        utterance.volume = 1;
-
-        // Try to find a female voice
-        const voices = synth.getVoices();
-        const femaleVoice = voices.find(v => 
-            v.name.toLowerCase().includes('female') ||
-            v.name.toLowerCase().includes('woman') ||
-            v.name.toLowerCase().includes('samantha') ||
-            v.name.toLowerCase().includes('victoria') ||
-            v.name.toLowerCase().includes('joanna') ||
-            v.name.toLowerCase().includes('karen') ||
-            (v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
-        );
-        
-        if (femaleVoice) {
-            utterance.voice = femaleVoice;
-        }
-
-        utterance.onstart = () => {
-            setSpeakingMessageId(messageId);
-        };
-
-        utterance.onend = () => {
-            setSpeakingMessageId(null);
-        };
-
-        utterance.onerror = () => {
-            setSpeakingMessageId(null);
-            toast.error('Failed to play audio');
-        };
-
-        synthRef.current = utterance;
-        synth.speak(utterance);
-    }, [speakingMessageId]);
 
     const handleSend = async (e) => {
         e.preventDefault();
@@ -461,30 +455,6 @@ const ChatWidget = ({
                                     >
                                         {chat.text}
                                     </ReactMarkdown>
-                                    {/* Speaker icon for bot messages */}
-                                    {chat.role === 'bot' && (
-                                        <button
-                                            onClick={() => speakMessage(chat.text, index)}
-                                            className={`mt-2 flex items-center gap-1.5 text-[10px] font-medium transition-all ${
-                                                speakingMessageId === index
-                                                    ? 'text-emerald-400'
-                                                    : 'text-zinc-400 hover:text-emerald-500'
-                                            }`}
-                                            title={speakingMessageId === index ? 'Click to stop' : 'Tap to listen'}
-                                        >
-                                            {speakingMessageId === index ? (
-                                                <>
-                                                    <VolumeX size={12} className="animate-pulse" />
-                                                    <span>Stop</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Volume2 size={12} />
-                                                    <span>Listen</span>
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
                                 </div>
                             </div>
                         ))}
