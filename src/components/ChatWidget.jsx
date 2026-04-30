@@ -33,6 +33,14 @@ const ChatWidget = ({
     const [isTakenOver, setIsTakenOver] = useState(false);
     const [socket, setSocket] = useState(null);
     const [isListening, setIsListening] = useState(false);
+    const [pendingJob, setPendingJob] = useState(null);
+    const [isRateLimited, setIsRateLimited] = useState(false);
+    const [rateLimitInfo, setRateLimitInfo] = useState(null);
+    const [ticketName, setTicketName] = useState('');
+    const [ticketPhone, setTicketPhone] = useState('');
+    const [ticketDescription, setTicketDescription] = useState('');
+    const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+    const [ticketSubmitted, setTicketSubmitted] = useState(false);
     const chatEndRef = useRef(null);
     const recognitionRef = useRef(null);
     const processedMessages = useRef(new Set());
@@ -190,6 +198,7 @@ const ChatWidget = ({
             if (attempts > maxAttempts) {
                 clearInterval(pollIntervalRef.current);
                 pollIntervalRef.current = null;
+                setPendingJob(null);
                 setIsLoading(false);
                 toast.error('Response timed out. Please try again.');
                 return;
@@ -207,6 +216,7 @@ const ChatWidget = ({
                 if (data.status === 'completed' && data.reply) {
                     clearInterval(pollIntervalRef.current);
                     pollIntervalRef.current = null;
+                    setPendingJob(null);
                     setIsLoading(false);
 
                     // Add bot message to local state
@@ -227,6 +237,7 @@ const ChatWidget = ({
                 } else if (data.status === 'failed') {
                     clearInterval(pollIntervalRef.current);
                     pollIntervalRef.current = null;
+                    setPendingJob(null);
                     setIsLoading(false);
                     toast.error('Failed to get response. Please try again.');
                 }
@@ -295,10 +306,30 @@ const ChatWidget = ({
                 setIsTakenOver(true);
                 toast.info('An admin has taken over this conversation');
                 setIsLoading(false);
+            } else if (data.rateLimited) {
+                setIsRateLimited(true);
+                // Check if ticket was already submitted in this session
+                const alreadySubmitted = sessionStorage.getItem(`ticketSubmitted_${sessionId}`) === 'true';
+                if (alreadySubmitted) {
+                    setTicketSubmitted(true);
+                }
+                setRateLimitInfo({
+                    remaining: data.remaining || 0,
+                    message: data.reply || 'Rate limit reached'
+                });
+                // Add bot message about rate limit
+                const botMsg = {
+                    role: 'bot',
+                    text: data.reply || "You've reached your daily message limit. Human support is on the way! Please fill in your details below.",
+                    timestamp: new Date()
+                };
+                setChatHistory(prev => [...prev, botMsg]);
+                setIsLoading(false);
             } else if (data.jobId) {
                 // Generate bot message ID for deduplication
                 const botMessageId = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                
+                setPendingJob({ jobId: data.jobId, botMessageId });
+
                 // Start polling for response
                 pollForResponse(data.jobId, botMessageId);
             }
@@ -308,6 +339,9 @@ const ChatWidget = ({
             setIsLoading(false);
         }
     }, [isLoading, sessionId, socket, isTakenOver, apiKey, apiSecret, finalApiUrl, pollForResponse]);
+
+    // Expose pending job state for external monitoring if needed
+    const getPendingJob = useCallback(() => pendingJob, [pendingJob]);
 
     const startListening = useCallback(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -384,6 +418,58 @@ const ChatWidget = ({
         if (!message.trim() || isLoading || !sessionId || !socket) return;
         const userMessage = message.trim();
         await sendMessage(userMessage);
+    };
+
+    const submitTicket = async (e) => {
+        e.preventDefault();
+        if (!ticketName.trim() || !ticketPhone.trim() || !sessionId) return;
+
+        setIsSubmittingTicket(true);
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (apiKey) headers['X-API-Key'] = apiKey;
+            if (apiSecret) headers['X-API-Secret'] = apiSecret;
+
+            // Create ticket via chat API
+            const response = await fetch(`${finalApiUrl}/ticket`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    sessionId,
+                    name: ticketName,
+                    phone: ticketPhone,
+                    description: ticketDescription || 'Support request from chat (rate limit reached)',
+                    subject: 'Support Request - Rate Limit',
+                    category: 'support',
+                    priority: 'high'
+                }),
+            });
+
+            if (response.ok) {
+                const botMsg = {
+                    role: 'bot',
+                    text: `Thank you ${ticketName}! Your request has been submitted. Our team will contact you shortly.`,
+                    timestamp: new Date()
+                };
+                setChatHistory(prev => [...prev, botMsg]);
+                toast.success('Request submitted!');
+                setTicketSubmitted(true);
+                // Persist to sessionStorage so it survives refresh
+                if (sessionId) {
+                    sessionStorage.setItem(`ticketSubmitted_${sessionId}`, 'true');
+                }
+                setTicketName('');
+                setTicketPhone('');
+                setTicketDescription('');
+            } else {
+                throw new Error('Failed to submit ticket');
+            }
+        } catch (error) {
+            console.error('Ticket submission error:', error);
+            toast.error('Failed to submit request. Please try again.');
+        } finally {
+            setIsSubmittingTicket(false);
+        }
     };
 
     return (
@@ -472,45 +558,118 @@ const ChatWidget = ({
                         <div ref={chatEndRef} />
                     </div>
 
-                    {/* Input Area */}
-                    <form onSubmit={handleSend} className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                placeholder={isTakenOver ? "Type your message..." : "Ask me anything..."}
-                                className="w-full p-3 pr-20 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-emerald-500 text-md text-black dark:text-white"
-                            />
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                                <button
-                                    type="button"
-                                    onClick={isListening ? stopListening : startListening}
-                                    className={`p-1.5 transition-all duration-200 ${isListening ? 'text-blue-500 scale-110' : 'text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400'}`}
-                                    title={isListening ? 'Listening... Click to stop' : 'Click and speak to send message'}
-                                >
-                                    {isListening ? (
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                    {/* Input Area - Show ticket form when rate limited */}
+                    {isRateLimited ? (
+                        ticketSubmitted ? (
+                            /* Contact info after ticket submitted */
+                            <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 border-t border-emerald-200 dark:border-emerald-800">
+                                <div className="text-center">
+                                    <div className="w-10 h-10 mx-auto mb-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                         </svg>
-                                    ) : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-                                        </svg>
-                                    )}
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="p-1.5 text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition-colors"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                                    </svg>
-                                </button>
+                                    </div>
+                                    <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300 mb-2">
+                                        Request received! We'll contact you shortly.
+                                    </p>
+                                    <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60">
+                                        <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-1.5 font-medium">Or reach us directly:</p>
+                                        <div className="flex flex-col gap-1.5">
+                                            <a href="tel:+1234567890" className="flex items-center justify-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-200 transition-colors">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                                +1 (234) 567-890
+                                            </a>
+                                            <a href="mailto:support@matthenry.com" className="flex items-center justify-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-200 transition-colors">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                </svg>
+                                                support@matthenry.com
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </form>
+                        ) : (
+                            <form onSubmit={submitTicket} className="p-4 bg-amber-50 dark:bg-amber-950/20 border-t border-amber-200 dark:border-amber-800">
+                                <p className="text-xs text-amber-700 dark:text-amber-400 mb-3 text-center font-medium">
+                                    Human support is on the way. Please leave your details:
+                                </p>
+                                <div className="space-y-2">
+                                    <input
+                                        type="text"
+                                        value={ticketName}
+                                        onChange={(e) => setTicketName(e.target.value)}
+                                        placeholder="Your name *"
+                                        required
+                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-2 focus:ring-amber-500 text-sm text-black dark:text-white"
+                                    />
+                                    <input
+                                        type="tel"
+                                        value={ticketPhone}
+                                        onChange={(e) => setTicketPhone(e.target.value)}
+                                        placeholder="Your phone number *"
+                                        required
+                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-2 focus:ring-amber-500 text-sm text-black dark:text-white"
+                                    />
+                                    <textarea
+                                        value={ticketDescription}
+                                        onChange={(e) => setTicketDescription(e.target.value)}
+                                        placeholder="How can we help you? (optional)"
+                                        rows={2}
+                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-2 focus:ring-amber-500 text-sm text-black dark:text-white resize-none"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingTicket || !ticketName.trim() || !ticketPhone.trim()}
+                                        className="w-full p-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white rounded-lg font-medium text-sm transition-colors"
+                                    >
+                                        {isSubmittingTicket ? 'Submitting...' : 'Submit Request'}
+                                    </button>
+                                </div>
+                            </form>
+                        )
+                    ) : (
+                        <form onSubmit={handleSend} className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    placeholder={isTakenOver ? "Type your message..." : "Ask me anything..."}
+                                    className="w-full p-3 pr-20 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-emerald-500 text-md text-black dark:text-white"
+                                />
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={isListening ? stopListening : startListening}
+                                        className={`p-1.5 transition-all duration-200 ${isListening ? 'text-blue-500 scale-110' : 'text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400'}`}
+                                        title={isListening ? 'Listening... Click to stop' : 'Click and speak to send message'}
+                                    >
+                                        {isListening ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isLoading}
+                                        className="p-1.5 text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    )}
                 </div>
             )}
 
