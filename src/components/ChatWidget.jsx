@@ -593,8 +593,8 @@ const ChatWidget = ({
                             </div>
                         ) : (
                             <form onSubmit={submitTicket} className="p-4 bg-amber-50 dark:bg-amber-950/20 border-t border-amber-200 dark:border-amber-800">
-                                <p className="text-xs text-amber-700 dark:text-amber-400 mb-3 text-center font-medium">
-                                    Human support is on the way. Please leave your details:
+                                <p className="text-md text-gray-500 dark:text-amber-400 mb-3 text-center font-medium">
+                                    Please leave your details:
                                 </p>
                                 <div className="space-y-2">
                                     <input
@@ -603,7 +603,7 @@ const ChatWidget = ({
                                         onChange={(e) => setTicketName(e.target.value)}
                                         placeholder="Your name *"
                                         required
-                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-2 focus:ring-amber-500 text-sm text-black dark:text-white"
+                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-1 focus:ring-amber-400 text-sm text-black dark:text-white"
                                     />
                                     <input
                                         type="tel"
@@ -611,19 +611,19 @@ const ChatWidget = ({
                                         onChange={(e) => setTicketPhone(e.target.value)}
                                         placeholder="Your phone number *"
                                         required
-                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-2 focus:ring-amber-500 text-sm text-black dark:text-white"
+                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-1 focus:ring-amber-400 text-sm text-black dark:text-white"
                                     />
                                     <textarea
                                         value={ticketDescription}
                                         onChange={(e) => setTicketDescription(e.target.value)}
                                         placeholder="How can we help you? (optional)"
                                         rows={2}
-                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-2 focus:ring-amber-500 text-sm text-black dark:text-white resize-none"
+                                        className="w-full p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-amber-200 dark:border-amber-700 outline-none focus:ring-1 focus:ring-amber-400 text-sm text-black dark:text-white resize-none"
                                     />
                                     <button
                                         type="submit"
                                         disabled={isSubmittingTicket || !ticketName.trim() || !ticketPhone.trim()}
-                                        className="w-full p-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white rounded-lg font-medium text-sm transition-colors"
+                                        className="w-full p-2.5 bg-green-600 text-white hover:bg-green-700 disabled:bg-green-400 text-gray-500 rounded-lg font-medium text-sm transition-colors"
                                     >
                                         {isSubmittingTicket ? 'Submitting...' : 'Submit Request'}
                                     </button>
